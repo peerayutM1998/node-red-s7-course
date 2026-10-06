@@ -1,0 +1,42 @@
+[
+    {"id":"tab_m2","type":"tab","label":"M2: Hello Node-RED"},
+    {"id":"tab_m3","type":"tab","label":"M3: Switch & Change"},
+    {"id":"tab_m6","type":"tab","label":"M6: Read/Write PLC"},
+    {"id":"tab_m7","type":"tab","label":"M7: Dashboard UI"},
+    {"id":"tab_mini","type":"tab","label":"Mini Project"},
+
+    {"id":"s7_plc","type":"s7 endpoint","address":"192.168.0.1","port":"102","rack":"0","slot":"1","cycletime":"1000","timeout":"2000","vartable":[{"addr":"DB1,REAL4","name":"Level"},{"addr":"Q0.0","name":"PumpStatus"},{"addr":"M0.0","name":"Alarm_1"}]},
+    
+    {"id":"ui_group_1","type":"ui_group","name":"Control Panel","tab":"ui_tab_1","order":1,"disp":true,"width":"6","collapse":false},
+    {"id":"ui_group_2","type":"ui_group","name":"Alarm System","tab":"ui_tab_1","order":2,"disp":true,"width":"6","collapse":false},
+    {"id":"ui_tab_1","type":"ui_tab","name":"Water Control","icon":"dashboard","order":1},
+
+    {"id":"comment_m4","type":"comment","z":"tab_m6","name":"M4: ทำในโปรแกรม TIA Portal (สร้าง DB1)","info":"","x":200,"y":60,"wires":[]},
+    {"id":"comment_m5","type":"comment","z":"tab_m6","name":"M5: ตั้งค่า Endpoint เสร็จแล้ว (คลิกโหนด S7 ด้านล่างเพื่อดู)","info":"","x":260,"y":100,"wires":[]},
+
+    {"id":"n_m2_1","type":"inject","z":"tab_m2","name":"Click me","props":[{"p":"payload"}],"payload":"Hello Node-RED","payloadType":"str","x":200,"y":100,"wires":[["n_m2_2"]]},
+    {"id":"n_m2_2","type":"debug","z":"tab_m2","name":"Show Sidebar","active":true,"complete":"payload","x":400,"y":100,"wires":[]},
+
+    {"id":"n_m3_1","type":"inject","z":"tab_m3","name":"Random 0-100","props":[{"p":"payload"}],"payload":"$floor($random() * 101)","payloadType":"jsonata","x":200,"y":140,"wires":[["n_m3_2"]]},
+    {"id":"n_m3_2","type":"switch","z":"tab_m3","name":"Check > 50","property":"payload","propertyType":"msg","rules":[{"t":"gt","v":"50","vt":"num"},{"t":"lte","v":"50","vt":"num"}],"outputs":2,"x":400,"y":140,"wires":[["n_m3_3"],["n_m3_4"]]},
+    {"id":"n_m3_3","type":"change","z":"tab_m3","name":"Set High","rules":[{"t":"set","p":"payload","pt":"msg","to":"High","tot":"str"}],"x":600,"y":100,"wires":[["n_m3_5"]]},
+    {"id":"n_m3_4","type":"change","z":"tab_m3","name":"Set Low","rules":[{"t":"set","p":"payload","pt":"msg","to":"Low","tot":"str"}],"x":600,"y":180,"wires":[["n_m3_5"]]},
+    {"id":"n_m3_5","type":"debug","z":"tab_m3","name":"Result","active":true,"complete":"payload","x":800,"y":140,"wires":[]},
+
+    {"id":"n_m6_in","type":"s7 in","z":"tab_m6","endpoint":"s7_plc","mode":"single","variable":"Level","name":"Read Tank_Level","x":200,"y":180,"wires":[["n_m6_debug"]]},
+    {"id":"n_m6_debug","type":"debug","z":"tab_m6","name":"Show Level","active":true,"complete":"payload","x":420,"y":180,"wires":[]},
+    {"id":"n_m6_inj_true","type":"inject","z":"tab_m6","name":"Pump ON (True)","props":[{"p":"payload"}],"payload":"true","payloadType":"bool","x":200,"y":260,"wires":[["n_m6_out"]]},
+    {"id":"n_m6_inj_false","type":"inject","z":"tab_m6","name":"Pump OFF (False)","props":[{"p":"payload"}],"payload":"false","payloadType":"bool","x":210,"y":300,"wires":[["n_m6_out"]]},
+    {"id":"n_m6_out","type":"s7 out","z":"tab_m6","endpoint":"s7_plc","variable":"PumpStatus","name":"Write Pump_Status","x":450,"y":280,"wires":[]},
+
+    {"id":"n_m7_in","type":"s7 in","z":"tab_m7","endpoint":"s7_plc","mode":"single","variable":"Level","name":"Read Tank_Level","x":200,"y":100,"wires":[["n_m7_gauge"]]},
+    {"id":"n_m7_gauge","type":"ui_gauge","z":"tab_m7","name":"Tank Level Gauge","group":"ui_group_1","order":1,"width":0,"height":0,"gtype":"gage","title":"Tank Level","label":"%","format":"{{value}}","min":0,"max":"100","colors":["#00b500","#e6e600","#ca3838"],"x":450,"y":100,"wires":[]},
+    {"id":"n_m7_switch_ui","type":"ui_switch","z":"tab_m7","name":"Pump Control","label":"Pump Status","group":"ui_group_1","order":2,"width":0,"height":0,"passthru":true,"decouple":"false","topic":"topic","style":"","onvalue":"true","onvalueType":"bool","offvalue":"false","offvalueType":"bool","animate":true,"x":200,"y":200,"wires":[["n_m7_out"]]},
+    {"id":"n_m7_out","type":"s7 out","z":"tab_m7","endpoint":"s7_plc","variable":"PumpStatus","name":"Write Pump_Status","x":450,"y":200,"wires":[]},
+
+    {"id":"n_mini_in","type":"s7 in","z":"tab_mini","endpoint":"s7_plc","mode":"single","variable":"Alarm_1","name":"Read Alarm_1","x":200,"y":100,"wires":[["n_mini_switch","n_mini_text"]]},
+    {"id":"n_mini_text","type":"ui_text","z":"tab_mini","group":"ui_group_2","order":1,"width":0,"height":0,"name":"Alarm Status UI","label":"Machine Status","format":"<font color=\"{{msg.payload ? 'red' : 'green'}}\">{{msg.payload ? 'ALARM ACTIVE' : 'NORMAL'}}</font>","layout":"row-spread","x":440,"y":160,"wires":[]},
+    {"id":"n_mini_switch","type":"switch","z":"tab_mini","name":"Filter True Only","property":"payload","propertyType":"msg","rules":[{"t":"true"}],"outputs":1,"x":440,"y":80,"wires":[["n_mini_func"]]},
+    {"id":"n_mini_func","type":"function","z":"tab_mini","name":"Format Log","func":"var d = new Date();\nmsg.payload = \"[ALARM] Machine error detected at \" + d.toLocaleString();\nreturn msg;","outputs":1,"x":630,"y":80,"wires":[["n_mini_debug"]]},
+    {"id":"n_mini_debug","type":"debug","z":"tab_mini","name":"Log to Debug","active":true,"complete":"payload","x":820,"y":80,"wires":[]}
+]
